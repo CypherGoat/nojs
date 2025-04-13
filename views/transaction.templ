@@ -15,13 +15,9 @@
 
 package views
 import (
-    "github.com/CypherGoat/web/cmd/api"
+    "github.com/CypherGoat/nojs/cmd/api"
     "strings"
 )
-
-script toggleQRCodeHandler(msg string) {
-  toggleQRCode(msg);
-}
 
 templ TransactionPage(transaction api.Transaction){
     <!-- TrustBox script -->
@@ -258,18 +254,16 @@ templ TransactionPage(transaction api.Transaction){
                 </div>
             }
             
-            <div class="transaction-section text-center">
-                <button id="toggleButton" type="button" onclick={ toggleQRCodeHandler(transaction.Address) } 
-                        class="qr-toggle-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M1 1h5v5H1zM1 10h5v5H1zM10 1h5v5h-5z"/>
-                        <path d="M10 10h1v1h-1zm1 1h1v1h-1zm1 1h1v1h-1zm1 0h1v-1h-1zm0-1h1V9h-1zm1-3h-1v1h1zm0 1h-1v1h1zm-2-1h-1v1h1zm0 1h-1v1h1z"/>
-                    </svg>
-                    Show QR Code
-                </button>
-                <div class="mt-4">
-                    <img id="qrcode" src="" alt="QR Code" class="hidden mx-auto border-4 border-white rounded-lg">
+                       <div class="transaction-section text-center">
+                <div class="section-label">QR Code</div>
+                <div class="qr-container">
+                    <img src={ "/generate?text=" + transaction.Address } alt="QR code for wallet address" class="mx-auto my-2 border-2 border-gray-700 rounded-lg p-2 bg-white" />
                 </div>
+                if transaction.Memo != "" {
+                    <div class="mt-2">
+                        <div class="text-sm text-amber-400">Note: This QR code only contains the address. Remember to include the memo.</div>
+                    </div>
+                }
             </div>
             
             <div class="transaction-section">
@@ -322,28 +316,5 @@ templ TransactionPage(transaction api.Transaction){
         </div>
     </div>
 </form>
-
-    <script>
-        let qrCodeVisible = false;
-        function toggleQRCode(text) {
-            const img = document.getElementById('qrcode');
-            const button = document.getElementById('toggleButton');
-            if (qrCodeVisible) {
-                img.classList.add('hidden');
-                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M1 1h5v5H1zM1 10h5v5H1zM10 1h5v5h-5z"/><path d="M10 10h1v1h-1zm1 1h1v1h-1zm1 1h1v1h-1zm1 0h1v-1h-1zm0-1h1V9h-1zm1-3h-1v1h1zm0 1h-1v1h1zm-2-1h-1v1h1zm0 1h-1v1h1z"/></svg> Show QR Code';
-            } else {
-                fetch('/generate?text=' + encodeURIComponent(text))
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const url = URL.createObjectURL(blob);
-                        img.src = url;
-                        img.classList.remove('hidden');
-                        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg> Hide QR Code';
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-            qrCodeVisible = !qrCodeVisible;
-        }
-    </script>
 }
 }

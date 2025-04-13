@@ -1,23 +1,8 @@
-// Copyright (C) 2025 CypherGoat
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 package views
 
-import (
+import(
+    "github.com/CypherGoat/nojs/cmd/api"
     "fmt"
-    "github.com/CypherGoat/web/cmd/api"
     "strings"
     "strconv"
 )
@@ -32,11 +17,29 @@ func FormatFloat(num float64) string {
     return str
 }
 
-templ EstimateCard(offers []api.Estimate) {
-     <style>
+
+templ EstimateTempl(errors string, estimate []api.Estimate){
+        <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            scroll-behavior: smooth;
+        }
+
         body {
             background-color: #121520;
             font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            flex-grow: 1;
+        }
+
+        footer {
+            margin-top: auto;
         }
 
         .container {
@@ -48,14 +51,73 @@ templ EstimateCard(offers []api.Estimate) {
             align-items: center;
         }
 
+        .container2 {
+            max-width:90%;
+            height: auto;
+            margin: 2rem auto;
+            padding: 1rem;
+            color: #f5f5f5;
+            align-items: center;
+        }
+
+        .container3 {
+            max-width:70%;
+            height: auto;
+            margin: 2rem auto;
+            padding: 1rem;
+            color: #f5f5f5;
+            align-items: center;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: #cccccc;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        #estimates-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .estimate-form {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
         .card {
             background: linear-gradient(145deg, #1a1f2e, #222633);
             border-radius: 16px;
             padding: 2rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 102, 204, 0.07);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 1rem;
+            width: 100%;
+            max-width: 600px;
         }
 
         .card:hover {
@@ -68,7 +130,7 @@ templ EstimateCard(offers []api.Estimate) {
             justify-content: space-between;
             align-items: center;
             font-size: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .amount-highlight {
@@ -76,27 +138,15 @@ templ EstimateCard(offers []api.Estimate) {
             font-weight: 700;
             color: #ffffff;
             text-align: right;
-            display: flex;
-            align-items: center;
+        }
+
+        .estimate-image {
+            max-width: 100px;
+            max-height: 100px;
         }
 
         .btn-select {
             background: linear-gradient(135deg, #0088ff, #0055cc);
-            color: #ffffff;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-select2 {
-            background: #2a3042;
             color: #fff;
             padding: 0.75rem;
             border: none;
@@ -105,125 +155,133 @@ templ EstimateCard(offers []api.Estimate) {
             font-weight: 600;
             cursor: pointer;
             width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        .btn-select2 {
+            background-color: #4a4a4a;
+            color: #fff;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
         }
 
         .btn-select:hover, .btn-select2:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.35);
+            transform: scale(1.05);
         }
 
         .btn-select:focus, .btn-select2:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3);
+            box-shadow: 0 0 0 3px rgba(74, 84, 241, 0.5);
         }
-
-        .popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(18, 21, 32, 0.95);
-            backdrop-filter: blur(5px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .popup-content {
-            background: linear-gradient(145deg, #1a1f2e, #222633);
-            padding: 2rem;
-            border-radius: 16px;
-            width: 80%;
-            max-width: 400px;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .popup-content input {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #ffffff;
-            background: #1a1f2e;
-        }
-
-        .popup-content button {
+        
+        .btn-primary {
             background: linear-gradient(135deg, #0088ff, #0055cc);
             color: #ffffff;
             padding: 0.75rem;
             border: none;
             border-radius: 12px;
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             width: 100%;
-            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            transition: transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease;
+            background-clip: padding-box;
+            position: relative;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
-        }
-
-        .popup-content button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.35);
-        }
-
-        .popup-content .close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: #ffffff;
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        .popup-content .close:hover {
-            opacity: 1;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0088ff, #0055cc);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.35);
             background: linear-gradient(135deg, #0099ff, #0066dd);
         }
 
-        .estimate-image {
-            max-width: 100px;
-            max-height: 100px;
-            border-radius: 8px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            transition: transform 0.3s ease;
+        .btn-primary:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3), 0 4px 12px rgba(0, 102, 204, 0.25);
         }
 
-        .card:hover .estimate-image {
-            transform: scale(1.05);
+        .rgb-effect {
+            color: #0066cc;
+            font-weight: 800;
         }
 
-        .exchange-name {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1.2rem;
-            background: linear-gradient(to right, #ffffff, #e0e0e0);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: inline-block;
+        @keyframes rgbAnimation {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .kyc-badge {
+            min-width: 24px;
+            height: 24px;
+            text-align: center;
+            line-height: 24px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
             position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+            vertical-align: middle;
+        }
+        
+        .kyc-badge::before {
+            content: attr(title);
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            width: max-content;
+            max-width: 300px;
+            font-size: 0.75rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+            white-space: normal; /* Changed from nowrap to normal */
+            text-align: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            line-height: 1.4;
+        }
+        
+        .kyc-badge:hover::before {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .kyc-0 {
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .kyc-1 {
+            background: linear-gradient(145deg, #7ed56f, #55c57a);
+            color: #333;
+        }
+        
+        .kyc-2 {
+            background: linear-gradient(145deg, #ffeb3b, #fdd835);
+            color: #333;
         }
 
         @media (max-width: 768px) {
@@ -259,309 +317,62 @@ templ EstimateCard(offers []api.Estimate) {
                 font-size: 1rem;
                 padding: 0.5rem;
             }
+        }
+        </style>
+    @Header(){
 
-            .popup-content {
-                width: 90%;
-                max-width: 300px;
-            }
-        }
-
-        .kyc-badge {
-            min-width: 28px;
-            height: 28px;
-            text-align: center;
-            line-height: 28px;
-            border-radius: 50%;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-            font-size: 0.85rem;
-            margin-left: 0.5rem;
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: help;
-            vertical-align: middle;
-        }
-        
-        .kyc-badge::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 130%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #1a1f2e;
-            color: white;
-            padding: 0.75rem;
-            border-radius: 8px;
-            width: max-content;
-            max-width: 250px;
-            font-size: 0.8rem;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            z-index: 100;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-        
-        .kyc-badge:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .show-kyc .kyc-badge::after {
-            bottom: auto;
-            top: 130%;
-            background-color: #222633;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-weight: 500;
-            line-height: 1.4;
-            z-index: 1000;
-            width: 280px;
-            padding: 1rem;
-            text-align: left;
-        }
-        
-        .show-kyc .kyc-badge:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .kyc-badge::after {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.95);
-            letter-spacing: 0.01rem;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        .show-kyc .kyc-badge::after {
-            background-color: #1e2335;
-            backdrop-filter: none;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
-            line-height: 1.5;
-            padding: 1rem 1.2rem;
-        }
-        
-        .kyc-0 {
-            background: linear-gradient(145deg, #1a9c51, #1a8040); 
-            color: white;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); 
-        }
-        
-        .kyc-1 {
-            background: linear-gradient(145deg, #4ca550, #3c8040); 
-            color: white;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); 
-        }
-        
-        .kyc-2 {
-            background: linear-gradient(145deg, #ffc107, #e6a800); 
-            color: white; 
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); 
-        }
-        
-        .sort-options {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1.5rem;
-            gap: 0.8rem;
-        }
-        
-        .sort-btn {
-            background-color: #2a3042;
-            color: #e0e0e0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.6rem 1.2rem;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-        
-        .sort-btn.active {
-            background-color: rgba(0, 102, 204, 0.2);
-            border-color: rgba(0, 102, 204, 0.5);
-            color: #ffffff;
-            font-weight: 600;
-        }
-        
-        .sort-btn:hover {
-            background-color: #353d52;
-            transform: translateY(-1px);
-        }
-
-        .kyc-badge {
-            display: none;
-        }
-
-        .show-kyc .kyc-badge {
-            display: inline-flex;
-        }
-
-        .coin-symbols {
-            color: #b0b0b0;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .coin-symbol {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-    </style>
-    <div class="container">
-<div class="sort-options">
-    <button id="sort-rate" class="sort-btn active" type="button">Sort by Rate</button>
-    <button id="sort-kyc" class="sort-btn" type="button">Sort by KYC</button>
-</div>
-        
-<div id="estimates-container">
-for i, offer := range offers {
-        if !(offer.SendAmount == 0) {
-            <form method="GET" action="/step2" class="estimate-form" data-kyc={ fmt.Sprintf("%d", offer.KYCScore) } data-rate={ fmt.Sprintf("%f", offer.ReceiveAmount) } data-is-top={ fmt.Sprintf("%t", i == 0) }>
-                <input type="hidden" name="coin1" value={ offer.Coin1 }>
-                <input type="hidden" name="coin2" value={ offer.Coin2 }>
-                <input type="hidden" name="network1" value={ offer.Network1 }>
-                <input type="hidden" name="network2" value={ offer.Network2 }>
-                <input type="hidden" name="amount" value={ fmt.Sprintf("%f", offer.SendAmount) }>
-                <input type="hidden" name="receiveamount" value={ fmt.Sprintf("%v", offer.ReceiveAmount) }>
-                <input type="hidden" name="partner" value={ offer.ExchangeName }>
-                <div class="card border-green-500 p-4">
-                    <h2 class="exchange-name text-center">
-                        { offer.ExchangeName }
-                        if offer.KYCScore == 0 {
-                            <span class="kyc-badge kyc-0" data-tooltip={ fmt.Sprintf("Exchange never asks for KYC. %s", LogText(offer.Log) ) }>0</span>
-                        } else if offer.KYCScore == 1 {
-                            <span class="kyc-badge kyc-1" data-tooltip={ fmt.Sprintf("Exchange may ask for KYC very rarely or never. %s", LogText(offer.Log)) }>1</span>
-                        } else {
-                            <span class="kyc-badge kyc-2" data-tooltip={ fmt.Sprintf("Exchange may rarely ask for KYC. %s", LogText(offer.Log)) }>2</span>
-                        }
-                    </h2>
-                    <div class="coin-symbols">
-                        <span class="coin-symbol">{ FormatFloat(offer.SendAmount) } { strings.ToUpper(offer.Coin1) }</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        <span class="coin-symbol">{ strings.ToUpper(offer.Coin2) }</span>
-                    </div>
-                    <div class="estimate-details">
-                        <div class="amount-highlight">
-                            { FormatFloat(offer.ReceiveAmount) } { strings.ToUpper(offer.Coin2) }
-                        </div>
-                        <div>
-                            <img src={ offer.ImageURL } alt="{ offer.ExchangeName }" class="estimate-image">
-                        </div>
-                    </div>
-                    if i == 0 {
-                        <button class="btn-select2 btn-primary" type="submit">Select Exchange</button>
-                    } else {
-                        <button class="btn-select2" type="submit">Select Exchange</button>
-                    }
-                </div>
-            </form>
-            <br/>
-        }
     }
-</div>
+<br/>
+if errors != ""{
+    <div class="error-message" role="alert">
+        <span class="block sm:inline">{errors}</span>
     </div>
-<script>
-    (function() {
-        const getSortPreference = () => sessionStorage.getItem('sortPreference') || 'rate';
-        const setSortPreference = (pref) => sessionStorage.setItem('sortPreference', pref);
-        
-        function initSorting() {
-            const sortBy = getSortPreference();
-            updateActiveButton(sortBy);
-            sortEstimates(sortBy, false); 
-        }
-        
-        function updateActiveButton(sortBy) {
-            document.querySelectorAll('.sort-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            const buttonId = sortBy === 'kyc' ? 'sort-kyc' : 'sort-rate';
-            const button = document.getElementById(buttonId);
-            if (button) button.classList.add('active');
-            
-            const container = document.getElementById('estimates-container');
-            if (sortBy === 'kyc') {
-                container.classList.add('show-kyc');
-            } else {
-                container.classList.remove('show-kyc');
+}
+
+<h1>Estimates</h1>
+<h2>Estimates found from our partnered exchanges:</h2>
+
+    <div id="estimates-container">
+        for i, est := range estimate {
+            if !(est.SendAmount == 0) {
+                <form method="GET" action="/step2" class="estimate-form" data-kyc={ fmt.Sprintf("%d", est.KYCScore) } data-rate={ fmt.Sprintf("%f", est.ReceiveAmount) } data-is-top={ fmt.Sprintf("%t", i == 0) }>
+                    <input type="hidden" name="coin1" value={ est.Coin1 }>
+                    <input type="hidden" name="coin2" value={ est.Coin2 }>
+                    <input type="hidden" name="network1" value={ est.Network1 }>
+                    <input type="hidden" name="network2" value={ est.Network2 }>
+                    <input type="hidden" name="amount" value={ fmt.Sprintf("%f", est.SendAmount) }>
+                    <input type="hidden" name="receiveamount" value={ fmt.Sprintf("%v", est.ReceiveAmount) }>
+                    <input type="hidden" name="partner" value={ est.ExchangeName }>
+                    <div class="card border-green-500 p-4">
+                        <h2 class="text-xl font-bold text-center mb-3 flex items-center justify-center">
+                            <span class="text-white">{ est.ExchangeName }</span>
+                            if est.KYCScore == 0 {
+                                <span class="kyc-badge kyc-0 ml-2" title={ fmt.Sprintf("Exchange never asks for KYC. %s", LogText(est.Log) ) }>0</span>
+                            } else if est.KYCScore == 1 {
+                                <span class="kyc-badge kyc-1 ml-2" title={ fmt.Sprintf("Exchange may ask for KYC very rarely or never. %s", LogText(est.Log) ) }>1</span>
+                            } else {
+                                <span class="kyc-badge kyc-2 ml-2" title={ fmt.Sprintf("Exchange may rarely ask for KYC. %s", LogText(est.Log) ) }>2</span>
+                            }
+                        </h2>
+                        <div class="estimate-details">
+                            <div class="amount-highlight">
+                                { fmt.Sprintf("%f", est.ReceiveAmount) } { strings.ToUpper(est.Coin2) }
+                            </div>
+                            <div>
+                                <img src={ est.ImageURL } alt={ est.ExchangeName } class="estimate-image">
+                            </div>
+                        </div>
+                        if i == 0 {
+                            <button class="btn-select2 btn-primary" type="submit">Select</button>
+                        } else {
+                            <button class="btn-select2" type="submit">Select</button>
+                        }
+                    </div>
+                </form>
+                <br/>
             }
         }
-        
-        document.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const sortBy = this.id === 'sort-kyc' ? 'kyc' : 'rate';
-                sortEstimates(sortBy, true); 
-            });
-        });
-        
-        function sortEstimates(sortBy, updateStorage) {
-            if (updateStorage) {
-                setSortPreference(sortBy);
-            }
-            
-            updateActiveButton(sortBy);
-            
-            const container = document.getElementById('estimates-container');
-            if (!container) return;
-            
-            const children = Array.from(container.children);
-            const forms = children.filter(el => el.classList.contains('estimate-form'));
-            
-            while (container.firstChild) {
-                container.removeChild(container.firstChild);
-            }
-            
-            forms.sort((a, b) => {
-                if (sortBy === 'kyc') {
-                    return parseInt(a.dataset.kyc) - parseInt(b.dataset.kyc);
-                } else {
-                    return parseFloat(b.dataset.rate) - parseFloat(a.dataset.rate);
-                }
-            });
-            
-            forms.forEach((form, index) => {
-                const button = form.querySelector('button');
-                if (index === 0) {
-                    button.className = 'btn-select2 btn-primary';
-                } else {
-                    button.className = 'btn-select2';
-                }
-                
-                container.appendChild(form);
-                
-                if (index < forms.length - 1) {
-                    const br = document.createElement('br');
-                    container.appendChild(br);
-                }
-            });
-        }
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initSorting);
-        } else {
-            initSorting();
-        }
-        
-        document.addEventListener('htmx:afterSwap', function() {
-            initSorting();
-        });
-    })();
-</script>
+    </div>
 }
 
 func LogText(log bool) string {

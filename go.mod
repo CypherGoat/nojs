@@ -1,4 +1,4 @@
-module github.com/CypherGoat/web
+module github.com/CypherGoat/nojs
 
 go 1.23.0
 

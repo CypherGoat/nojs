@@ -20,13 +20,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/CypherGoat/web/views"
+	"github.com/CypherGoat/nojs/views"
 
-	"github.com/CypherGoat/web/cmd/api"
+	"github.com/CypherGoat/nojs/cmd/api"
 
 	"github.com/labstack/echo/v4"
 )
@@ -96,36 +97,55 @@ var exchangeInfo = map[string]ExchangeInfo{
 }
 
 func EstimateHandler(c echo.Context) error {
+	amount := c.QueryParam("amount")
 	coin1 := c.QueryParam("coin1")
 	coin2 := c.QueryParam("coin2")
-	amountStr := c.QueryParam("amount")
-	network1 := c.QueryParam("network1")
-	network2 := c.QueryParam("network2")
 
-	amount, err := strconv.ParseFloat(amountStr, 64)
+	amountFloat, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Error parsing amount")
+		return views.EstimateTempl(err.Error(), []api.Estimate{}).Render(c.Request().Context(), c.Response())
+	}
+	if amountFloat == 0 {
+		return views.EstimateTempl("amount can't be zero", []api.Estimate{}).Render(c.Request().Context(), c.Response())
 	}
 
-	apiEstimates, err := api.FetchEstimateFromAPI(coin1, coin2, amount, false, network1, network2)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("%s", err.Error()))
-	}
-	for i := range apiEstimates {
+	coin1Ticker, network1 := parseCoinValue(coin1)
+	coin2Ticker, network2 := parseCoinValue(coin2)
 
-		name := strings.ToLower(apiEstimates[i].ExchangeName)
+	estimates, err := api.FetchEstimateFromAPI(coin1Ticker, coin2Ticker, amountFloat, false, network1, network2)
+	if err != nil {
+		return views.EstimateTempl(err.Error(), []api.Estimate{}).Render(c.Request().Context(), c.Response())
+	}
+
+	for i := range estimates {
+		// fmt.Println(apiEstimates[i].ExchangeName)
+
+		name := strings.ToLower(estimates[i].ExchangeName)
 
 		if info, ok := exchangeInfo[name]; ok {
-			apiEstimates[i].ImageURL = info.ImageURL
+			estimates[i].ImageURL = info.ImageURL
 		} else {
-			apiEstimates[i].ImageURL = "https://example.com/images/default.png"
+			estimates[i].ImageURL = ""
 		}
 
-		apiEstimates[i].Log = exchangeInfo[name].RequireIP
+		estimates[i].Log = exchangeInfo[name].RequireIP
 
 	}
+	return views.EstimateTempl("", estimates).Render(c.Request().Context(), c.Response())
+}
 
-	return views.EstimateCard(apiEstimates).Render(c.Request().Context(), c.Response())
+func parseCoinValue(value string) (string, string) {
+	re := regexp.MustCompile(`^([^\(]+)(?:\(([^)]+)\))?$`)
+	matches := re.FindStringSubmatch(value)
+	if len(matches) == 3 {
+		ticker := matches[1]
+		network := matches[2]
+		if network == "" {
+			network = ticker
+		}
+		return ticker, network
+	}
+	return value, value
 }
 
 func Step2Handler(c echo.Context) error {
@@ -157,6 +177,8 @@ func Step2Handler(c echo.Context) error {
 	name := strings.ToLower(estimate.ExchangeName)
 	if info, ok := exchangeInfo[name]; ok {
 		estimate.ImageURL = info.ImageURL
+	} else {
+		estimate.ImageURL = "https://example.com/images/default.png"
 	}
 
 	return views.AddressForm(estimate, false).Render(c.Request().Context(), c.Response())
@@ -192,6 +214,8 @@ func Step3Handler(c echo.Context) error {
 			UserAgent: userAgent,
 			LangList:  langList,
 		}
+		// fmt.Printf("Debug - Info values for %s: IP=%s, UA=%s, Lang=%s\n",
+		// partner, ip, userAgent, langList)
 	}
 
 	affiliate := ""
@@ -327,8 +351,7 @@ func RobotsHandler(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/plain")
 
 	robots := `User-agent: *
-Allow: /
-Sitemap: https://cyphergoat.com/sitemap.xml
+Disallow: /
 `
 
 	return c.String(http.StatusOK, robots)

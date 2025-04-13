@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CypherGoat/web/handlers"
+	"github.com/CypherGoat/nojs/handlers"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -92,7 +92,7 @@ func main() {
 			c.String(code, err.Error())
 		}
 	}
-	e.Logger.Fatal(e.Start(":4200"))
+	e.Logger.Fatal(e.Start(":6666"))
 }
 
 func generateQRCodeHandler(c echo.Context) error {
