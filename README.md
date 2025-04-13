@@ -1,6 +1,6 @@
 # 🐐 CypherGoat (nojs) - instant exchange aggregator
 
-This is the official repository of [cyphergoat.com](https://cyphergoat.com) the open source instant exchange aggregator. This repository houses the official **javascript free** web-ui
+This is the official repository of [nojs.cyphergoat.com](https://no.jscyphergoat.com). This repository houses the official **javascript free** web-ui
 
 All of the code is licensed under AGPL-v3
 
