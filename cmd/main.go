@@ -42,6 +42,22 @@ func AffiliateMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func TorI2PMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		host := c.Request().Host
+
+		isTor := strings.Contains(host, ".onion")
+		isI2P := strings.Contains(host, ".i2p")
+		isAnonymousNetwork := isTor || isI2P
+
+		c.Set("isTor", isTor)
+		c.Set("isI2P", isI2P)
+		c.Set("isAnonymousNetwork", isAnonymousNetwork)
+
+		return next(c)
+	}
+}
+
 func main() {
 	e := echo.New()
 
@@ -51,6 +67,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
 	e.Use(AffiliateMiddleware)
+	e.Use(TorI2PMiddleware)
 
 	e.Use(removeTrailingSlash)
 

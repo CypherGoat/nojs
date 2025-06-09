@@ -32,6 +32,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var blockedExchangesForAnonymousNetworks = map[string]bool{
+	"stealthex": true,
+}
+
+func isExchangeBlocked(exchangeName string, isAnonymousNetwork bool) bool {
+	if !isAnonymousNetwork {
+		return false
+	}
+	return blockedExchangesForAnonymousNetworks[strings.ToLower(exchangeName)]
+}
+
 var (
 	transactions = make(map[string]api.Transaction)
 	mu           sync.Mutex
@@ -96,6 +107,11 @@ var exchangeInfo = map[string]ExchangeInfo{
 	"bitcoinvn":    {"/exchanges/bitcoinvn.png", false},
 }
 
+type EstimateWithBlocking struct {
+	api.Estimate
+	Blocked bool
+}
+
 func EstimateHandler(c echo.Context) error {
 	amount := c.QueryParam("amount")
 	coin1 := c.QueryParam("coin1")
@@ -117,6 +133,8 @@ func EstimateHandler(c echo.Context) error {
 		return views.EstimateTempl(err.Error(), []api.Estimate{}).Render(c.Request().Context(), c.Response())
 	}
 
+	isAnonymousNetwork, _ := c.Get("isAnonymousNetwork").(bool)
+
 	for i := range estimates {
 		// fmt.Println(apiEstimates[i].ExchangeName)
 
@@ -129,6 +147,7 @@ func EstimateHandler(c echo.Context) error {
 		}
 
 		estimates[i].Log = exchangeInfo[name].RequireIP
+		estimates[i].Blocked = isExchangeBlocked(estimates[i].ExchangeName, isAnonymousNetwork)
 
 	}
 	return views.EstimateTempl("", estimates).Render(c.Request().Context(), c.Response())
@@ -163,6 +182,11 @@ func Step2Handler(c echo.Context) error {
 	receiveamount, err := strconv.ParseFloat(receiveamountStr, 64)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "Error parsing receive amount")
+	}
+
+	isAnonymousNetwork, _ := c.Get("isAnonymousNetwork").(bool)
+	if isExchangeBlocked(partner, isAnonymousNetwork) {
+		return c.JSON(http.StatusForbidden, "Exchange not available via anonymous networks")
 	}
 
 	var estimate api.Estimate
@@ -203,6 +227,11 @@ func Step3Handler(c echo.Context) error {
 		LangList:  "",
 	}
 	partnerLower := strings.ToLower(partner)
+
+	isAnonymousNetwork, _ := c.Get("isAnonymousNetwork").(bool)
+	if isExchangeBlocked(partner, isAnonymousNetwork) {
+		return c.JSON(http.StatusForbidden, "Exchange not available via anonymous networks")
+	}
 
 	if exchangeData, ok := exchangeInfo[partnerLower]; ok && exchangeData.RequireIP {
 		ip := c.RealIP()

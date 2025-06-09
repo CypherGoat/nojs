@@ -52,6 +52,7 @@ type Estimate struct {
 	ImageURL      string
 	KYCScore      int `json:"KYCScore"`
 	Log           bool
+	Blocked       bool `json:"blocked"`
 }
 
 type Info struct {

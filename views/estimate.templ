@@ -283,6 +283,36 @@ templ EstimateTempl(errors string, estimate []api.Estimate){
             background: linear-gradient(145deg, #ffeb3b, #fdd835);
             color: #333;
         }
+                .card.blocked {
+            opacity: 0.6;
+            background: linear-gradient(145deg, #2a2a2a, #333333);
+            border: 1px solid #555;
+        }
+
+        .card.blocked .btn-select,
+        .card.blocked .btn-select2 {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .card.blocked .btn-select:hover,
+        .card.blocked .btn-select2:hover {
+            background: #666;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .blocked-notice {
+            background: linear-gradient(135deg, #656565, #3b3b3b);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
 
         @media (max-width: 768px) {
             .card {
@@ -332,7 +362,7 @@ if errors != ""{
 <h1>Estimates</h1>
 <h2>Estimates found from our partnered exchanges:</h2>
 
-    <div id="estimates-container">
+   <div id="estimates-container">
         for i, est := range estimate {
             if !(est.SendAmount == 0) {
                 <form method="GET" action="/step2" class="estimate-form" data-kyc={ fmt.Sprintf("%d", est.KYCScore) } data-rate={ fmt.Sprintf("%f", est.ReceiveAmount) } data-is-top={ fmt.Sprintf("%t", i == 0) }>
@@ -343,7 +373,7 @@ if errors != ""{
                     <input type="hidden" name="amount" value={ fmt.Sprintf("%f", est.SendAmount) }>
                     <input type="hidden" name="receiveamount" value={ fmt.Sprintf("%v", est.ReceiveAmount) }>
                     <input type="hidden" name="partner" value={ est.ExchangeName }>
-                    <div class="card border-green-500 p-4">
+                    <div class={ "card border-green-500 p-4", templ.KV("blocked", est.Blocked) }>
                         <h2 class="text-xl font-bold text-center mb-3 flex items-center justify-center">
                             <span class="text-white">{ est.ExchangeName }</span>
                             if est.KYCScore == 0 {
@@ -362,14 +392,21 @@ if errors != ""{
                                 <img src={ est.ImageURL } alt={ est.ExchangeName } class="estimate-image">
                             </div>
                         </div>
-                        if i == 0 {
-                            <button class="btn-select2 btn-primary" type="submit">Select</button>
+                        if est.Blocked {
+                            <button class="btn-select2" type="button" disabled>Not Available</button>
+                            <div class="blocked-notice">
+                                This exchange is not available via our hidden services.
+                            </div>
                         } else {
-                            <button class="btn-select2" type="submit">Select</button>
+                            if i == 0 {
+                                <button class="btn-select2 btn-primary" type="submit">Select</button>
+                            } else {
+                                <button class="btn-select2" type="submit">Select</button>
+                            }
                         }
                     </div>
                 </form>
-                <br/>
+                <div class="estimate-spacer" style="height: 2rem;"></div>
             }
         }
     </div>
