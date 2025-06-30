@@ -19,8 +19,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,7 +35,12 @@ import (
 )
 
 var blockedExchangesForAnonymousNetworks = map[string]bool{
-	"stealthex": true,
+	"stealthex":  true,
+	"changenow":  true,
+	"fixedfloat": true,
+	"simpleswap": true,
+	"exolix":     true,
+	"nanswap":    true,
 }
 
 func isExchangeBlocked(exchangeName string, isAnonymousNetwork bool) bool {
@@ -105,6 +112,8 @@ var exchangeInfo = map[string]ExchangeInfo{
 	"exolix":       {"/exchanges/exolix.png", true},
 	"swapuz":       {"/exchanges/swapuz.svg", false},
 	"bitcoinvn":    {"/exchanges/bitcoinvn.png", false},
+	"pegasusswap":  {"/exchanges/pegasusswap.png", false},
+	"godex":        {"/exchanges/godex.svg", true},
 }
 
 type EstimateWithBlocking struct {
@@ -116,13 +125,29 @@ func EstimateHandler(c echo.Context) error {
 	amount := c.QueryParam("amount")
 	coin1 := c.QueryParam("coin1")
 	coin2 := c.QueryParam("coin2")
+	sorting := c.QueryParam("sort")
+
+	query := url.Values{}
+	for key, values := range c.QueryParams() {
+		if key == "sort" {
+			continue
+		}
+		for _, v := range values {
+			query.Add(key, v)
+		}
+	}
+	baseQuery := query.Encode()
+
+	if sorting != "kyc" {
+		sorting = "rate"
+	}
 
 	amountFloat, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
-		return views.EstimateTempl(err.Error(), []api.Estimate{}).Render(c.Request().Context(), c.Response())
+		return views.EstimateTempl(err.Error(), []api.Estimate{}, "", baseQuery).Render(c.Request().Context(), c.Response())
 	}
 	if amountFloat == 0 {
-		return views.EstimateTempl("amount can't be zero", []api.Estimate{}).Render(c.Request().Context(), c.Response())
+		return views.EstimateTempl("amount can't be zero", []api.Estimate{}, "", baseQuery).Render(c.Request().Context(), c.Response())
 	}
 
 	coin1Ticker, network1 := parseCoinValue(coin1)
@@ -130,7 +155,7 @@ func EstimateHandler(c echo.Context) error {
 
 	estimates, err := api.FetchEstimateFromAPI(coin1Ticker, coin2Ticker, amountFloat, false, network1, network2)
 	if err != nil {
-		return views.EstimateTempl(err.Error(), []api.Estimate{}).Render(c.Request().Context(), c.Response())
+		return views.EstimateTempl(err.Error(), []api.Estimate{}, "", baseQuery).Render(c.Request().Context(), c.Response())
 	}
 
 	isAnonymousNetwork, _ := c.Get("isAnonymousNetwork").(bool)
@@ -150,7 +175,17 @@ func EstimateHandler(c echo.Context) error {
 		estimates[i].Blocked = isExchangeBlocked(estimates[i].ExchangeName, isAnonymousNetwork)
 
 	}
-	return views.EstimateTempl("", estimates).Render(c.Request().Context(), c.Response())
+
+	if sorting == "kyc" {
+		sort.SliceStable(estimates, func(i, j int) bool {
+			if estimates[i].KYCScore == estimates[j].KYCScore {
+				return estimates[i].ReceiveAmount > estimates[j].ReceiveAmount
+			}
+			return estimates[i].KYCScore < estimates[j].KYCScore
+		})
+	}
+
+	return views.EstimateTempl("", estimates, sorting, baseQuery).Render(c.Request().Context(), c.Response())
 }
 
 func parseCoinValue(value string) (string, string) {
@@ -270,10 +305,6 @@ func Step3Handler(c echo.Context) error {
 	fmt.Printf("Redirecting to transaction: /transaction/%s\n", transaction.CGID)
 
 	return c.Redirect(http.StatusSeeOther, "/transaction/"+transaction.CGID)
-}
-
-func containsIgnoreCase(s, substr string) bool {
-	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
 
 func GetTransactionHandler(c echo.Context) error {
