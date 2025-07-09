@@ -86,8 +86,6 @@ func main() {
 	e.GET("/health", handlers.HealthHandler)
 	e.GET("/affiliate/terms", handlers.AffiliateTerms)
 
-	e.GET("/swap/:coin", handlers.CoinExchangeScreenHandler)
-
 	e.GET("/robots.txt", handlers.RobotsHandler)
 
 	e.GET("/sitemap.xml", handlers.SitemapHandler)
