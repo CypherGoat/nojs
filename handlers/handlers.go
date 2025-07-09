@@ -127,6 +127,9 @@ func EstimateHandler(c echo.Context) error {
 	coin2 := c.QueryParam("coin2")
 	sorting := c.QueryParam("sort")
 
+	coin1 = strings.ToLower(coin1)
+	coin2 = strings.ToLower(coin2)
+
 	query := url.Values{}
 	for key, values := range c.QueryParams() {
 		if key == "sort" {
@@ -354,17 +357,6 @@ func getCoinName(ticker string) string {
 	}
 
 	return defaultName
-}
-
-func CoinExchangeScreenHandler(c echo.Context) error {
-	coin := c.Param("coin")
-
-	coinName, exists := coinExists(coin)
-	if !exists {
-		return c.Redirect(http.StatusSeeOther, "/")
-	}
-
-	return views.CoinExchangeScreen(coin, coinName).Render(c.Request().Context(), c.Response())
 }
 
 func coinExists(ticker string) (string, bool) {
