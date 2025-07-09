@@ -471,11 +471,11 @@ footer {
                 <div class="input-group">
                     <div>
                         <label for="amount" class="form-label">Amount</label>
-                        <input type="number" min="0" id="amount" name="amount" required step="any" class="form-input" autocomplete="off" placeholder="0.00">
+                        <input type="number" min="0" id="amount" name="amount" required step="any" class="form-input" autocomplete="off" placeholder="0.00" value="0.1">
                     </div>
                     <div class="searchable-dropdown">
                         <label class="form-label">Send Coin</label>
-                        <input list="coins1" placeholder="Search coin to send..." id="dropdown-search-send" name="coin1" autocomplete="off">
+                        <input list="coins1" placeholder="Search coin to send..." id="dropdown-search-send" name="coin1" autocomplete="off" class="dropdown-input" value="BTC">
                       <datalist id="coins1">
     for _, coin := range getCoins() {
         <option value={formatCoinValue(coin)}>{coin.Name} - {strings.ToUpper(coin.Ticker)} ({strings.ToUpper(coin.Network)})</option>
@@ -491,7 +491,7 @@ footer {
                     </div>
                     <div class="searchable-dropdown">
                         <label class="form-label">Receive Coin</label>
-                        <input list="coins2" placeholder="Search coin to receive..." id="dropdown-search-receive" name="coin2" autocomplete="off">
+                        <input list="coins2" placeholder="Search coin to receive..." id="dropdown-search-receive" name="coin2" autocomplete="off" class="dropdown-input" value="XMR">
                         
 <datalist id="coins2">
     for _, coin := range getCoins() {
