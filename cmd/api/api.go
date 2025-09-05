@@ -53,6 +53,7 @@ type Estimate struct {
 	KYCScore      int `json:"KYCScore"`
 	Log           bool
 	Blocked       bool `json:"blocked"`
+	NoTextURL     string
 }
 
 type Info struct {
@@ -167,7 +168,7 @@ func FetchEstimateFromAPI(coin1, coin2 string, amount float64, best bool, networ
 	return result.Rates, nil
 }
 
-func CreateTradeFromAPI(coin1, coin2 string, amount float64, address, partner string, network1, network2, affiliate string, info Info) (error, Transaction) {
+func CreateTradeFromAPI(coin1, coin2 string, amount float64, address, partner string, network1, network2, affiliate string, info Info, isAnonymousNetwork bool) (error, Transaction) {
 	params := url.Values{}
 	params.Add("coin1", coin1)
 	params.Add("coin2", coin2)
@@ -180,6 +181,12 @@ func CreateTradeFromAPI(coin1, coin2 string, amount float64, address, partner st
 	params.Add("ip", info.IP)
 	params.Add("useragent", info.UserAgent)
 	params.Add("lang", info.LangList)
+
+	if isAnonymousNetwork {
+		params.Add("source", "anonnet")
+	} else {
+		params.Add("source", "clearnet-nojs")
+	}
 
 	requestURL := fmt.Sprintf("%s/swap?%s", URL, params.Encode())
 

@@ -93,27 +93,31 @@ func NotFoundHandler(c echo.Context) error {
 
 type ExchangeInfo struct {
 	ImageURL  string
+	NoTextURL string
 	RequireIP bool
 }
 
 var exchangeInfo = map[string]ExchangeInfo{
-	"alfacash":     {"/exchanges/alfacash.svg", true},
-	"changee":      {"/exchanges/changee.svg", true},
-	"changehero":   {"/exchanges/changehero.svg", true},
-	"changenow":    {"/exchanges/changenow.svg", true},
-	"coincraddle":  {"/exchanges/coincraddle.png", true},
-	"exch.cx":      {"/exchanges/exchcx.png", false},
-	"fixedfloat":   {"/exchanges/fixedfloat-v2.svg", true},
-	"majesticbank": {"/exchanges/majesticbank.png", false},
-	"nanswap":      {"/exchanges/nanswap.svg", true},
-	"simpleswap":   {"/exchanges/simpleswap.svg", true},
-	"wizardswap":   {"/exchanges/wizardswap.png", false},
-	"stealthex":    {"/exchanges/stealthex.svg", true},
-	"exolix":       {"/exchanges/exolix.png", true},
-	"swapuz":       {"/exchanges/swapuz.svg", false},
-	"bitcoinvn":    {"/exchanges/bitcoinvn.png", false},
-	"pegasusswap":  {"/exchanges/pegasusswap.png", false},
-	"godex":        {"/exchanges/godex.svg", true},
+	"alfacash":     {"/exchanges/alfacash.svg", "/exchanges/no-text/alfacash.jpg", true},
+	"changee":      {"/exchanges/changee.svg", "", true},
+	"changehero":   {"/exchanges/changehero.svg", "/exchanges/no-text/changehero.jpeg", true},
+	"changenow":    {"/exchanges/changenow.svg", "", true},
+	"coincraddle":  {"/exchanges/coincraddle.png", "", true},
+	"exch.cx":      {"/exchanges/exchcx.png", "", false},
+	"fixedfloat":   {"/exchanges/fixedfloat-v2.svg", "/exchanges/no-text/fixedfloat.svg", true},
+	"majesticbank": {"/exchanges/majesticbank.png", "", false},
+	"nanswap":      {"/exchanges/nanswap.svg", "", true},
+	"simpleswap":   {"/exchanges/simpleswap.svg", "/exchanges/no-text/simpleswap.svg", true},
+	"wizardswap":   {"/exchanges/wizardswap.png", "", false},
+	"stealthex":    {"/exchanges/stealthex.svg", "/exchanges/no-text/stealthex.png", true},
+	"exolix":       {"/exchanges/exolix.png", "/exchanges/no-text/exolix.png", true},
+	"swapuz":       {"/exchanges/swapuz.svg", "/exchanges/no-text/swapuz.png", false},
+	"bitcoinvn":    {"/exchanges/bitcoinvn.png", "/exchanges/no-text/bitcoinvn.png", false},
+	"xgram":        {"/exchanges/xgram.svg", "", true},
+	"pegasusswap":  {"/exchanges/pegasusswap.png", "", false},
+	"godex":        {"/exchanges/godex.svg", "/exchanges/no-text/godex.jpg", true},
+	"letsexchange": {"/exchanges/letsexchange.svg", "/exchanges/no-text/letsexchange.svg", true},
+	"quickex":      {"/exchanges/quickex.png", "", false},
 }
 
 type EstimateWithBlocking struct {
@@ -170,6 +174,8 @@ func EstimateHandler(c echo.Context) error {
 
 		if info, ok := exchangeInfo[name]; ok {
 			estimates[i].ImageURL = info.ImageURL
+			estimates[i].NoTextURL = info.NoTextURL
+
 		} else {
 			estimates[i].ImageURL = ""
 		}
@@ -291,7 +297,7 @@ func Step3Handler(c echo.Context) error {
 		affiliate = affiliateCookie.Value
 	}
 
-	err, transaction := api.CreateTradeFromAPI(coin1, coin2, amount, address, partner, network1, network2, affiliate, info)
+	err, transaction := api.CreateTradeFromAPI(coin1, coin2, amount, address, partner, network1, network2, affiliate, info, isAnonymousNetwork)
 	if err != nil || transaction.Id == "" {
 		var estimate api.Estimate
 		estimate.Coin1 = coin1
